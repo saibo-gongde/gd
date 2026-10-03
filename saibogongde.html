@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="Content-Security-Policy" content="frame-ancestors 'none';">
+    <title>赛博功德 · AI福报数字文创</title>
+    <style>
+        :root {
+            --gold: #ffd700;
+            --cyan: #00f0ff;
+            --neon-pink: #ff2d95;
+            --dark-bg: #0a0a0f;
+            --card-bg: #111122;
+            --text: #e0d8c8;
+            --danger: #ff3b3b;
+            --success: #3bff8c;
+            --purple: #b347ea;
+            --font-mono: 'Courier New', 'Source Code Pro', monospace;
+            --font-display: 'Georgia', 'Noto Serif SC', serif;
+            --font-body: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            font-size: 16px;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--dark-bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+            padding-bottom: 120px;
+            position: relative;
+        }
+
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 16px 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 10px 20px;
+            position: relative;
+        }
+        .header .title {
+            font-family: var(--font-display);
+            font-size: clamp(1.6rem, 4vw, 2.6rem);
+            font-weight: bold;
+            background: linear-gradient(135deg, #ffd700 0%, #ffaa00 25%, #ffe87c 50%, #ffd700 75%, #ffcc00 100%);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s ease-in-out infinite;
+            text-shadow: none;
+            letter-spacing: 3px;
+            margin-bottom: 6px;
+        }
+        .header .subtitle {
+            font-size: 0.95rem;
+            color: #b0c4de;
+            letter-spacing: 2px;
+            font-family: var(--font-mono);
+            opacity: 0.85;
+        }
+        @keyframes shimmer {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* 音频按钮 */
+        .audio-btn {
+            position: fixed;
+            top: 16px;
+            right: 16px;
+            z-index: 100;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 2px solid var(--cyan);
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--cyan);
+            font-size: 1.3rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            min-width: 44px;
+            min-height: 44px;
+        }
+        .audio-btn:hover {
+            background: rgba(0, 240, 255, 0.2);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+        }
+        .audio-btn.muted {
+            color: #666;
+            border-color: #555;
+        }
+
+        /* 实时滚动通知条 */
+        .ticker-wrap {
+            background: rgba(20, 20, 40, 0.85);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 22px;
+            padding: 8px 16px;
+            margin: 10px 0 20px;
+            overflow: hidden;
+            white-space: nowrap;
+            position: relative;
+            backdrop-filter: blur(6px);
+        }
+        .ticker {
+            display: inline-block;
+            animation: tickerScroll 28s linear infinite;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            color: #c9b870;
+            letter-spacing: 1px;
+        }
+        .ticker span {
+            margin-right: 40px;
+            opacity: 0.9;
+        }
+        @keyframes tickerScroll {
+            0% {
+                transform: translateX(0);
+            }
+            100% {
+                transform: translateX(-50%);
+            }
+        }
+        .ticker-wrap:hover .ticker {
+            animation-play-state: paused;
+        }
+
+        /* 功德轮 + 木鱼区 */
+        .interactive-zone {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0 30px;
+            position: relative;
+        }
+        .dharma-wheel {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            position: relative;
+            animation: spinWheel 8s linear infinite;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.5), 0 0 80px rgba(255, 170, 0, 0.25);
+            cursor: default;
+            flex-shrink: 0;
+        }
+        .dharma-wheel::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            border: 2px dashed rgba(255, 215, 0, 0.6);
+            animation: spinWheel 5s linear infinite reverse;
+        }
+        .dharma-wheel::after {
+            content: '☸';
+            position: absolute;
+            inset: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--gold);
+            animation: spinWheel 12s linear infinite;
+            text-align: center;
+            line-height: 1;
+        }
+        @keyframes spinWheel {
+            from {
+                transform: rotateY(0deg) rotate(0deg);
+            }
+            to {
+                transform: rotateY(360deg) rotate(360deg);
+            }
+        }
+        .dharma-wheel-container {
+            perspective: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .woodfish-wrapper {
+            position: relative;
+            flex-shrink: 0;
+        }
+        .woodfish {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, #6b3a2a, #3d1c0f 60%, #1a0800 100%);
+            border: 3px solid #c8843c;
+            cursor: pointer;
+            position: relative;
+            box-shadow: 0 8px 30px rgba(180, 80, 30, 0.5), inset 0 -6px 12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.08s, box-shadow 0.08s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
+            color: #e8c888;
+            text-shadow: 0 0 15px rgba(255, 200, 100, 0.7);
+            user-select: none;
+            -webkit-user-select: none;
+            min-width: 90px;
+            min-height: 90px;
+        }
+        .woodfish:active {
+            transform: scale(0.9);
+            box-shadow: 0 2px 10px rgba(255, 150, 50, 0.8), inset 0 -3px 8px rgba(0, 0, 0, 0.5);
+        }
+        .woodfish-hit {
+            animation: woodfishBounce 0.25s ease-out;
+        }
+        @keyframes woodfishBounce {
+            0% {
+                transform: scale(0.85);
+            }
+            40% {
+                transform: scale(1.08);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        .float-text {
+            position: absolute;
+            pointer-events: none;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--gold);
+            animation: floatUp 1.2s ease-out forwards;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+            white-space: nowrap;
+        }
+        @keyframes floatUp {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-80px) scale(1.5);
+            }
+        }
+
+        /* 倒计时 */
+        .countdown-bar {
+            text-align: center;
+            background: rgba(255, 45, 85, 0.15);
+            border: 1px solid rgba(255, 45, 149, 0.5);
+            border-radius: 25px;
+            padding: 10px 20px;
+            margin: 15px 0;
+            font-family: var(--font-mono);
+            color: #ff6090;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+        @keyframes pulseGlow {
+            0%,
+            100% {
+                box-shadow: 0 0 12px rgba(255, 45, 149, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 28px rgba(255, 45, 149, 0.7);
+            }
+        }
+        .countdown-bar .time {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #ff8cab;
+        }
+
+        /* 套餐卡片 */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .plan-card {
+            background: var(--card-bg);
+            border: 2px solid rgba(255, 215, 0, 0.25);
+            border-radius: 16px;
+            padding: 18px 14px;
+            text-align: center;
+            position: relative;
+            transition: all 0.35s;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+            overflow: hidden;
+            min-width: 180px;
+        }
+        .plan-card:hover {
+            border-color: var(--gold);
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.4), 0 0 60px rgba(255, 170, 0, 0.2);
+            transform: translateY(-4px);
+        }
+        .plan-card.recommended {
+            border-color: var(--neon-pink);
+            box-shadow: 0 0 25px rgba(255, 45, 149, 0.5);
+        }
+        .plan-card.recommended::before {
+            content: '🔥 热门推荐';
+            position: absolute;
+            top: 8px;
+            right: -28px;
+            background: var(--neon-pink);
+            color: #fff;
+            font-size: 0.7rem;
+            padding: 3px 32px;
+            transform: rotate(25deg);
+            letter-spacing: 1px;
+            font-weight: bold;
+            z-index: 2;
+        }
+        .plan-name {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--gold);
+            margin-bottom: 4px;
+            letter-spacing: 2px;
+        }
+        .plan-price-original {
+            text-decoration: line-through;
+            color: #888;
+            font-size: 0.85rem;
+            margin-right: 6px;
+        }
+        .plan-price {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+        .plan-price .unit {
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        .plan-features {
+            list-style: none;
+            padding: 10px 0;
+            font-size: 0.82rem;
+            color: #bcc8d8;
+            text-align: left;
+            margin: 0 auto;
+            max-width: 180px;
+        }
+        .plan-features li {
+            padding: 3px 0;
+            position: relative;
+            padding-left: 18px;
+        }
+        .plan-features li::before {
+            content: '✦';
+            position: absolute;
+            left: 0;
+            color: var(--cyan);
+            font-size: 0.7rem;
+            top: 4px;
+        }
+        .plan-disclaimer {
+            font-size: 0.68rem;
+            color: #777;
+            margin-top: 8px;
+            font-style: italic;
+            letter-spacing: 1px;
+        }
+        .plan-btn {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 10px 28px;
+            border-radius: 25px;
+            border: 2px solid var(--gold);
+            background: rgba(255, 215, 0, 0.1);
+            color: var(--gold);
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 2px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            min-width: 48px;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .plan-btn:hover {
+            background: rgba(255, 215, 0, 0.25);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        .plan-btn.recommended-btn {
+            border-color: var(--neon-pink);
+            background: rgba(255, 45, 149, 0.15);
+            color: #ff6090;
+        }
+        .plan-btn.recommended-btn:hover {
+            background: rgba(255, 45, 149, 0.3);
+            box-shadow: 0 0 20px rgba(255, 45, 149, 0.6);
+        }
+
+        /* 许愿池 */
+        .wish-pool {
+            background: rgba(20, 20, 40, 0.8);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 24px 0;
+            text-align: center;
+        }
+        .wish-pool h3 {
+            color: var(--cyan);
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            font-family: var(--font-display);
+        }
+        .wish-input {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 16px;
+            border-radius: 25px;
+            border: 2px solid rgba(0, 240, 255, 0.4);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-size: 0.95rem;
+            text-align: center;
+            letter-spacing: 1px;
+            outline: none;
+            transition: all 0.3s;
+            min-height: 48px;
+        }
+        .wish-input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+        .wish-btn {
+            margin-top: 10px;
+            padding: 10px 30px;
+            border-radius: 25px;
+            border: 2px solid var(--cyan);
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--cyan);
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            min-width: 48px;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+        .wish-btn:hover {
+            background: rgba(0, 240, 255, 0.25);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+        }
+        .wish-result {
+            margin-top: 14px;
+            padding: 14px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 12px;
+            color: #d4c8a0;
+            font-family: var(--font-display);
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+            line-height: 1.7;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            display: none;
+            text-align: left;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .wish-result .cta {
+            color: var(--gold);
+            cursor: pointer;
+            text-decoration: underline;
+            font-weight: bold;
+            letter-spacing: 2px;
+            display: inline-block;
+            margin-top: 8px;
+        }
+
+        /* 排行榜 */
+        .leaderboard {
+            background: rgba(20, 20, 40, 0.8);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin: 24px 0;
+        }
+        .leaderboard h3 {
+            text-align: center;
+            color: var(--gold);
+            letter-spacing: 3px;
+            font-family: var(--font-display);
+            margin-bottom: 14px;
+        }
+        .lb-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            transition: background 0.2s;
+        }
+        .lb-row:hover {
+            background: rgba(255, 215, 0, 0.05);
+        }
+        .lb-rank {
+            font-weight: bold;
+            color: var(--gold);
+            width: 30px;
+            text-align: center;
+            font-size: 1rem;
+        }
+        .lb-rank.top3 {
+            font-size: 1.3rem;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+        .lb-name {
+            flex: 1;
+            text-align: left;
+            padding-left: 10px;
+            color: #c8d0dc;
+        }
+        .lb-amount {
+            font-weight: bold;
+            color: #fff;
+            min-width: 60px;
+            text-align: right;
+        }
+        .lb-badge {
+            font-size: 0.65rem;
+            background: var(--purple);
+            color: #fff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 6px;
+            letter-spacing: 1px;
+        }
+
+        /* 模态窗口 */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            padding: 16px;
+        }
+        .modal-overlay.hidden {
+            display: none;
+        }
+        .modal {
+            background: #1a1a2e;
+            border: 2px solid var(--gold);
+            border-radius: 20px;
+            padding: 24px 20px;
+            max-width: 520px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3), 0 20px 60px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            z-index: 201;
+        }
+        .modal h3 {
+            color: var(--gold);
+            letter-spacing: 2px;
+            font-family: var(--font-display);
+            margin-bottom: 14px;
+            font-size: 1.3rem;
+        }
+        .modal .bank-info {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 12px 0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: left;
+            line-height: 2;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+        .modal .bank-info .card-number-display {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #fff;
+            letter-spacing: 3px;
+            word-break: break-all;
+            background: rgba(255, 215, 0, 0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: inline-block;
+            margin: 4px 0;
+        }
+        .copy-btn {
+            display: inline-block;
+            padding: 10px 22px;
+            border-radius: 22px;
+            border: 2px solid var(--cyan);
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--cyan);
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 2px;
+            transition: all 0.3s;
+            margin: 6px;
+            min-width: 48px;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+        .copy-btn:hover {
+            background: rgba(0, 240, 255, 0.3);
+            box-shadow: 0 0 18px rgba(0, 240, 255, 0.5);
+        }
+        .copy-btn.copied {
+            background: rgba(59, 255, 140, 0.3);
+            border-color: var(--success);
+            color: var(--success);
+            box-shadow: 0 0 18px rgba(59, 255, 140, 0.5);
+        }
+        .modal .verify-section {
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            text-align: left;
+        }
+        .modal .verify-section input {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            font-size: 0.9rem;
+            margin: 6px 0;
+            letter-spacing: 1px;
+            outline: none;
+            min-height: 48px;
+            transition: border-color 0.3s;
+        }
+        .modal .verify-section input:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+        }
+        .modal .verify-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            border-radius: 25px;
+            border: 2px solid var(--gold);
+            background: rgba(255, 215, 0, 0.15);
+            color: var(--gold);
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 2px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            min-width: 48px;
+            min-height: 48px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+            width: 100%;
+        }
+        .modal .verify-btn:hover {
+            background: rgba(255, 215, 0, 0.3);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 16px;
+            font-size: 1.6rem;
+            cursor: pointer;
+            color: #aaa;
+            z-index: 5;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+            min-width: 40px;
+            min-height: 40px;
+            background: rgba(0, 0, 0, 0.3);
+            border: none;
+        }
+        .modal-close:hover {
+            color: #fff;
+            background: rgba(255, 50, 50, 0.4);
+        }
+        .modal .msg-box {
+            padding: 10px;
+            border-radius: 8px;
+            margin: 8px 0;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+            display: none;
+        }
+        .modal .msg-box.warn {
+            background: rgba(255, 150, 30, 0.2);
+            color: #ffb86c;
+            border: 1px solid rgba(255, 150, 30, 0.4);
+            display: block;
+        }
+        .modal .msg-box.error {
+            background: rgba(255, 50, 50, 0.2);
+            color: #ff6b6b;
+            border: 1px solid rgba(255, 50, 50, 0.4);
+            display: block;
+        }
+        .modal .msg-box.success {
+            background: rgba(59, 255, 140, 0.15);
+            color: #3bff8c;
+            border: 1px solid rgba(59, 255, 140, 0.4);
+            display: block;
+        }
+
+        /* 证书 */
+        .certificate {
+            background: #1a1a0a;
+            border: 4px double var(--gold);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 14px 0;
+            text-align: center;
+            position: relative;
+            box-shadow: inset 0 0 40px rgba(255, 215, 0, 0.1);
+            display: none;
+        }
+        .certificate.show {
+            display: block;
+            animation: certAppear 0.6s ease-out;
+        }
+        @keyframes certAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        .certificate h4 {
+            color: var(--gold);
+            letter-spacing: 3px;
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+        }
+        .certificate .cert-details {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: #c8b878;
+            letter-spacing: 1px;
+            line-height: 2;
+            text-align: left;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+        .certificate .ai-text {
+            font-family: var(--font-display);
+            color: #e0d0a0;
+            letter-spacing: 1px;
+            font-style: italic;
+            padding: 10px;
+            border-left: 3px solid var(--gold);
+            margin: 8px 0;
+            text-align: left;
+            line-height: 1.8;
+        }
+
+        /* 大转盘 */
+        .wheel-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 250;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            padding: 16px;
+        }
+        .wheel-overlay.hidden {
+            display: none;
+        }
+        .wheel-container {
+            text-align: center;
+            position: relative;
+        }
+        .wheel-container canvas {
+            max-width: 320px;
+            max-height: 320px;
+            width: 100%;
+            height: auto;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.5);
+            transition: box-shadow 0.3s;
+        }
+        .wheel-container canvas:hover {
+            box-shadow: 0 0 60px rgba(255, 215, 0, 0.8);
+        }
+        .wheel-pointer {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2rem;
+            color: var(--gold);
+            z-index: 5;
+            pointer-events: none;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+            animation: pointerBounce 1s ease-in-out infinite;
+        }
+        @keyframes pointerBounce {
+            0%,
+            100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            50% {
+                transform: translateX(-50%) translateY(-8px);
+            }
+        }
+        .wheel-close {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: #fff;
+            z-index: 10;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s;
+            min-width: 40px;
+            min-height: 40px;
+        }
+        .wheel-close:hover {
+            background: rgba(255, 50, 50, 0.5);
+            border-color: #f55;
+        }
+        .wheel-result-display {
+            color: var(--gold);
+            font-size: 1.1rem;
+            letter-spacing: 2px;
+            margin-top: 10px;
+            font-weight: bold;
+            font-family: var(--font-display);
+        }
+        .wheel-timer {
+            color: #ff8cab;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            margin-top: 4px;
+        }
+
+        /* 底部法律声明 */
+        .legal-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 20, 0.92);
+            border-top: 2px solid rgba(255, 215, 0, 0.4);
+            padding: 10px 16px;
+            z-index: 150;
+            font-size: 0.7rem;
+            color: #999;
+            text-align: center;
+            letter-spacing: 0.5px;
+            line-height: 1.5;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            pointer-events: auto;
+        }
+        .legal-bar .icon-warn {
+            color: #ffb84d;
+            margin-right: 4px;
+        }
+
+        /* 庆贺特效 */
+        .celebrate-overlay {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 300;
+        }
+        .celebrate-particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: var(--gold);
+            border-radius: 50%;
+            animation: celebFall 2.5s ease-out forwards;
+            pointer-events: none;
+        }
+        @keyframes celebFall {
+            0% {
+                opacity: 1;
+                transform: translateY(-100px) rotate(0deg) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(105vh) rotate(720deg) scale(0.3);
+            }
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .plans-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .plan-card {
+                padding: 12px 8px;
+                border-radius: 12px;
+            }
+            .plan-name {
+                font-size: 1rem;
+            }
+            .plan-price {
+                font-size: 1.3rem;
+            }
+            .plan-features {
+                font-size: 0.7rem;
+                max-width: 140px;
+            }
+            .dharma-wheel {
+                width: 80px;
+                height: 80px;
+            }
+            .dharma-wheel::after {
+                font-size: 2rem;
+                inset: 10px;
+            }
+            .woodfish {
+                width: 65px;
+                height: 65px;
+                min-width: 65px;
+                min-height: 65px;
+                font-size: 1.6rem;
+            }
+            .modal {
+                padding: 16px 12px;
+                border-radius: 14px;
+                max-width: 95vw;
+            }
+            .modal .bank-info .card-number-display {
+                font-size: 1rem;
+                letter-spacing: 1px;
+            }
+            .legal-bar {
+                font-size: 0.62rem;
+                padding: 8px 10px;
+            }
+            .header .title {
+                font-size: 1.3rem;
+                letter-spacing: 1px;
+            }
+            .ticker {
+                font-size: 0.7rem;
+            }
+            .wheel-container canvas {
+                max-width: 250px;
+                max-height: 250px;
+            }
+        }
+        @media (max-width: 380px) {
+            .plans-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .plan-card {
+                max-width: 280px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 粒子背景 -->
+    <canvas id="particleCanvas"></canvas>
+
+    <!-- 音频按钮 -->
+    <button class="audio-btn muted" id="audioBtn" title="开启/关闭音效" aria-label="音效开关">🔇</button>
+
+    <!-- 主容器 -->
+    <div class="main-container">
+        <!-- 头部 -->
+        <header class="header">
+            <h1 class="title">赛博功德·AI福报充值中心</h1>
+            <p class="subtitle">电子木鱼Pro｜你的每笔心意都将化作专属数字福缘</p>
+        </header>
+
+        <!-- 实时滚动通知条 -->
+        <div class="ticker-wrap">
+            <div class="ticker" id="tickerContent">
+                <span>[***3352] 刚刚获取了AI定制功德文</span>
+                <span>[***7819] 获得电子舍利子</span>
+                <span>[***4201] 完成大圆满结缘</span>
+                <span>[***1987] AI回向文已生成</span>
+                <span>[***6630] 尊享排行榜登顶</span>
+            </div>
+        </div>
+
+        <!-- 倒计时 -->
+        <div class="countdown-bar" id="countdownBar">
+            ⏳ 今日双倍福缘窗口关闭仅剩 <span class="time" id="countdownTime">--:--:--</span>
+        </div>
+
+        <!-- 互动区：功德轮 + 电子木鱼 -->
+        <div class="interactive-zone">
+            <div class="dharma-wheel-container">
+                <div class="dharma-wheel" title="全息功德轮"></div>
+            </div>
+            <div class="woodfish-wrapper" id="woodfishWrapper">
+                <div class="woodfish" id="woodfish" title="点击敲击电子木鱼">🪵</div>
+            </div>
+        </div>
+
+        <!-- 套餐卡片 -->
+        <div class="plans-grid" id="plansGrid">
+            <!-- 套餐1 -->
+            <div class="plan-card" data-plan="1" data-price="9.9" data-name="小缘起">
+                <div class="plan-name">小缘起</div>
+                <div><span class="plan-price-original">¥19.9</span><span class="plan-price">¥<b>9.9</b><span class="unit">起</span></span></div>
+                <ul class="plan-features">
+                    <li>基础AI回向文</li>
+                    <li>电子功德证书</li>
+                </ul>
+                <p class="plan-disclaimer">此为数字文创服务，非实物</p>
+                <button class="plan-btn" onclick="openPaymentModal(1)">立即结缘</button>
+            </div>
+            <!-- 套餐2 推荐 -->
+            <div class="plan-card recommended" data-plan="2" data-price="29.9" data-name="中福聚">
+                <div class="plan-name">中福聚</div>
+                <div><span class="plan-price-original">¥59.9</span><span class="plan-price">¥<b>29.9</b><span class="unit">起</span></span></div>
+                <ul class="plan-features">
+                    <li>专属AI运势加持文</li>
+                    <li id="doubleBlessDesc">限时双倍功德 ⚡</li>
+                    <li>已结缘：<b id="plan2Count">8,372</b>人</li>
+                </ul>
+                <p class="plan-disclaimer">此为数字文创服务，非实物</p>
+                <button class="plan-btn recommended-btn" onclick="openPaymentModal(2)">立即结缘</button>
+            </div>
+            <!-- 套餐3 -->
+            <div class="plan-card" data-plan="3" data-price="99.9" data-name="大圆满">
+                <div class="plan-name">大圆满</div>
+                <div><span class="plan-price-original">¥199.9</span><span class="plan-price">¥<b>99.9</b><span class="unit">起</span></span></div>
+                <ul class="plan-features">
+                    <li>永久功德榜留名</li>
+                    <li>AI每日诵经（电子动画）</li>
+                    <li>电子舍利子生成器</li>
+                </ul>
+                <p class="plan-disclaimer">此为数字文创服务，非实物</p>
+                <button class="plan-btn" onclick="openPaymentModal(3)">立即结缘</button>
+            </div>
+            <!-- 套餐4 -->
+            <div class="plan-card" data-plan="4" data-price="199.9" data-name="无尽藏">
+                <div class="plan-name">无尽藏</div>
+                <div><span class="plan-price-original">¥399.9</span><span class="plan-price">¥<b>199.9</b><span class="unit">起</span></span></div>
+                <ul class="plan-features">
+                    <li>以上全部内容</li>
+                    <li>尊享排行榜前三展示</li>
+                    <li>个性化赛博法号</li>
+                </ul>
+                <p class="plan-disclaimer">此为数字文创服务，非实物</p>
+                <button class="plan-btn" onclick="openPaymentModal(4)">立即结缘</button>
+            </div>
+        </div>
+
+        <!-- AI许愿池 -->
+        <div class="wish-pool" id="wishPool">
+            <h3>🌊 AI许愿池</h3>
+            <input type="text" class="wish-input" id="wishInput" placeholder="输入你的心愿..." maxlength="80" aria-label="心愿输入">
+            <br>
+            <button class="wish-btn" id="wishBtn" onclick="generateWish()">AI加持 ✨</button>
+            <div class="wish-result" id="wishResult"></div>
+        </div>
+
+        <!-- 功德排行榜 -->
+        <div class="leaderboard" id="leaderboard">
+            <h3>🏆 功德排行榜</h3>
+            <div id="lbList"></div>
+        </div>
+    </div>
+
+    <!-- 底部法律声明 -->
+    <div class="legal-bar" id="legalBar">
+        <span class="icon-warn">⚠️</span> 法律声明：本网页为创意数字娱乐产品，所有服务（包括电子功德证书、AI生成回向文等）均为虚拟文创内容，非宗教活动。您支付的是数字内容服务费，资金直接转账至服务提供方个人账户（户名：黄国华）。'功德''福报'等词汇仅为赛博风格包装，不构成真实宗教承诺。未满18周岁者禁止参与任何支付行为。交易完全自愿，一旦转账即表示您已阅读并同意本声明。用户数据仅存储在本地浏览器。
+    </div>
+
+    <!-- 支付模态窗口 -->
+    <div class="modal-overlay hidden" id="paymentModalOverlay">
+        <div class="modal" id="paymentModal">
+            <button class="modal-close" onclick="closePaymentModal()" aria-label="关闭">✕</button>
+            <h3 id="pmTitle">福缘转账指引</h3>
+            <p id="pmPlanInfo" style="color:#ccc;letter-spacing:1px;"></p>
+            <p style="color:#ffb86c;font-size:0.8rem;margin:6px 0;" id="pmDiscountInfo"></p>
+            <div class="bank-info">
+                <strong>请使用手机银行、网银或ATM向以下账户转账所选金额：</strong><br>
+                收款银行：<b>中国农业银行</b><br>
+                户名：<b id="displayAccountName">黄国华</b><br>
+                账号：<span class="card-number-display" id="displayCardNumber">6228 4801 1671 1795 371</span><br>
+                <button class="copy-btn" id="copyCardBtn" onclick="copyCardNumber()">📋 一键复制卡号</button>
+                <span style="font-size:0.7rem;color:#888;display:block;margin-top:4px;">点击复制后，请打开银行APP完成转账</span>
+            </div>
+            <div id="securityWarning" style="display:none;color:#ff3b3b;font-weight:bold;padding:10px;background:rgba(255,0,0,0.2);border-radius:8px;margin:8px 0;">
+                ⚠️ 页面可能被篡改，请刷新后重试！
+            </div>
+            <button class="verify-btn" id="showVerifyBtn" onclick="showVerifySection()">我已完成转账，验证福缘 ✓</button>
+            <div class="verify-section hidden" id="verifySection">
+                <label for="verifyAmount">您转账的金额（元）：</label>
+                <input type="number" id="verifyAmount" step="0.01" min="0" placeholder="请输入转账金额" aria-label="转账金额">
+                <label for="verifyNote">交易流水号或备注（选填）：</label>
+                <input type="text" id="verifyNote" placeholder="选填，仅用于AI匹配" maxlength="60" aria-label="流水号">
+                <button class="verify-btn" id="submitVerifyBtn" onclick="submitVerification()">提交验证</button>
+                <div class="msg-box" id="verifyMsg"></div>
+                <!-- 证书区域 -->
+                <div class="certificate" id="certificateArea">
+                    <h4>📜 电子功德证书</h4>
+                    <div class="cert-details" id="certDetails"></div>
+                    <div class="ai-text" id="certAiText"></div>
+                    <p style="font-size:0.7rem;color:#888;margin-top:6px;">📸 可截图保存此证书 | 数据仅存储于本地</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 大转盘覆盖层 -->
+    <div class="wheel-overlay hidden" id="wheelOverlay">
+        <div class="wheel-container" id="wheelContainer">
+            <button class="wheel-close" id="wheelCloseBtn" onclick="closeWheel()" aria-label="关闭转盘">✕</button>
+            <div class="wheel-pointer">▼</div>
+            <canvas id="wheelCanvas" width="320" height="320" onclick="spinWheel()"></canvas>
+            <div class="wheel-result-display" id="wheelResultDisplay"></div>
+            <div class="wheel-timer" id="wheelTimerDisplay"></div>
+        </div>
+    </div>
+
+    <!-- 庆贺特效层 -->
+    <div class="celebrate-overlay" id="celebrateOverlay"></div>
+
+    <script>
+        "use strict";
+
+        // ============ Base64 编码的关键信息 ============
+        const CARD_NUMBER_BASE64 = "NjIyODQ4MDExNjcxMTc5NTM3MQ=="; // 6228480116711795371
+        const ACCOUNT_NAME_BASE64 = "6buE5Zu95Y2O"; // 黄国华
+        const BANK_NAME = "中国农业银行";
+
+        function decodeBase64(b64) {
+            try {
+                return decodeURIComponent(atob(b64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+            } catch (e) {
+                return '';
+            }
+        }
+        const CARD_NUMBER_RAW = decodeBase64(CARD_NUMBER_BASE64);
+        const ACCOUNT_NAME_RAW = decodeBase64(ACCOUNT_NAME_BASE64);
+
+        // 格式化卡号显示
+        function formatCardNumber(raw) {
+            return raw.replace(/(\d{4})(?=\d)/g, '$1 ');
+        }
+        const CARD_NUMBER_FORMATTED = formatCardNumber(CARD_NUMBER_RAW);
+
+        // ============ DOM 引用 ============
+        const cardNumberDisplayEl = document.getElementById('displayCardNumber');
+        const accountNameDisplayEl = document.getElementById('displayAccountName');
+        const securityWarningEl = document.getElementById('securityWarning');
+        const paymentModalOverlay = document.getElementById('paymentModalOverlay');
+        const verifySection = document.getElementById('verifySection');
+        const verifyMsg = document.getElementById('verifyMsg');
+        const certificateArea = document.getElementById('certificateArea');
+        const certDetails = document.getElementById('certDetails');
+        const certAiText = document.getElementById('certAiText');
+        const showVerifyBtn = document.getElementById('showVerifyBtn');
+        const celebrateOverlay = document.getElementById('celebrateOverlay');
+        const wheelOverlay = document.getElementById('wheelOverlay');
+        const wheelCanvas = document.getElementById('wheelCanvas');
+        const wheelResultDisplay = document.getElementById('wheelResultDisplay');
+        const wheelTimerDisplay = document.getElementById('wheelTimerDisplay');
+        const tickerContent = document.getElementById('tickerContent');
+        const lbList = document.getElementById('lbList');
+        const countdownTimeEl = document.getElementById('countdownTime');
+        const doubleBlessDesc = document.getElementById('doubleBlessDesc');
+        const plan2CountEl = document.getElementById('plan2Count');
+        const audioBtn = document.getElementById('audioBtn');
+        const woodfishEl = document.getElementById('woodfish');
+        const woodfishWrapper = document.getElementById('woodfishWrapper');
+        const wishResult = document.getElementById('wishResult');
+        const pmTitle = document.getElementById('pmTitle');
+        const pmPlanInfo = document.getElementById('pmPlanInfo');
+        const pmDiscountInfo = document.getElementById('pmDiscountInfo');
+        const copyCardBtn = document.getElementById('copyCardBtn');
+
+        // ============ 状态变量 ============
+        let currentPlan = null;
+        let currentPlanPrice = null;
+        let currentPlanName = '';
+        let activeDiscount = null; // {rate: 0.8, label: '8折券', expires: timestamp}
+        let audioCtx = null;
+        let audioEnabled = false;
+        let wheelSpinning = false;
+        let wheelDrawnDiscount = null;
+        const originalCardText = CARD_NUMBER_FORMATTED;
+        const originalAccountName = ACCOUNT_NAME_RAW;
+
+        // ============ 初始化卡号显示 ============
+        function initCardDisplay() {
+            if (cardNumberDisplayEl) {
+                cardNumberDisplayEl.textContent = CARD_NUMBER_FORMATTED;
+            }
+            if (accountNameDisplayEl) {
+                accountNameDisplayEl.textContent = ACCOUNT_NAME_RAW;
+            }
+        }
+        initCardDisplay();
+
+        // ============ MutationObserver 防篡改 ============
+        function setupMutationObserver() {
+            if (!cardNumberDisplayEl) return;
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'characterData' || mutation.type === 'childList') {
+                        const currentText = (cardNumberDisplayEl.textContent || '').replace(/\s/g, '');
+                        const expectedText = CARD_NUMBER_RAW.replace(/\s/g, '');
+                        if (currentText !== expectedText) {
+                            triggerSecurityAlert();
+                        }
+                    }
+                });
+            });
+            observer.observe(cardNumberDisplayEl, {
+                characterData: true,
+                childList: true,
+                subtree: true
+            });
+
+            // 也监控户名
+            if (accountNameDisplayEl) {
+                const observer2 = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'characterData' || mutation.type === 'childList') {
+                            const curName = (accountNameDisplayEl.textContent || '').trim();
+                            if (curName !== ACCOUNT_NAME_RAW) {
+                                triggerSecurityAlert();
+                            }
+                        }
+                    });
+                });
+                observer2.observe(accountNameDisplayEl, {
+                    characterData: true,
+                    childList: true,
+                    subtree: true
+                });
+            }
+            return observer;
+        }
+        const cardObserver = setupMutationObserver();
+
+        // 每30秒再次比对
+        setInterval(function() {
+            if (!cardNumberDisplayEl) return;
+            const currentText = (cardNumberDisplayEl.textContent || '').replace(/\s/g, '');
+            const expectedText = CARD_NUMBER_RAW.replace(/\s/g, '');
+            if (currentText !== expectedText) {
+                triggerSecurityAlert();
+            }
+            if (accountNameDisplayEl && (accountNameDisplayEl.textContent || '').trim() !== ACCOUNT_NAME_RAW) {
+                triggerSecurityAlert();
+            }
+        }, 30000);
+
+        function triggerSecurityAlert() {
+            if (securityWarningEl) {
+                securityWarningEl.style.display = 'block';
+            }
+            if (showVerifyBtn) showVerifyBtn.style.display = 'none';
+            if (verifySection) verifySection.classList.add('hidden');
+            if (copyCardBtn) copyCardBtn.style.display = 'none';
+            if (cardNumberDisplayEl) cardNumberDisplayEl.style.display = 'none';
+            console.warn('安全警告：卡号显示可能被篡改！');
+            // 禁止后续提交
+            if (document.getElementById('submitVerifyBtn')) {
+                document.getElementById('submitVerifyBtn').disabled = true;
+                document.getElementById('submitVerifyBtn').textContent = '⚠️ 页面异常，请刷新';
+                document.getElementById('submitVerifyBtn').style.opacity = '0.5';
+                document.getElementById('submitVerifyBtn').style.pointerEvents = 'none';
+            }
+        }
+
+        // ============ XSS安全函数 ============
+        function safeText(str) {
+            if (typeof str !== 'string') str = String(str || '');
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.textContent;
+        }
+
+        function safeSetText(el, text) {
+            if (!el) return;
+            el.textContent = safeText(text);
+        }
+
+        // ============ 音频系统 ============
+        function getAudioContext() {
+            if (!audioCtx) {
+                try {
+                    audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    return null;
+                }
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume().catch(function() {});
+            }
+            return audioCtx;
+        }
+
+        function playWoodfishSound() {
+            if (!audioEnabled) return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            try {
+                const now = ctx.currentTime;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.frequency.setValueAtTime(880, now);
+                osc.frequency.exponentialRampToValueAtTime(440, now + 0.15);
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.4, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                osc.start(now);
+                osc.stop(now + 0.35);
+
+                // 二次谐波
+                const osc2 = ctx.createOscillator();
+                const gain2 = ctx.createGain();
+                osc2.connect(gain2);
+                gain2.connect(ctx.destination);
+                osc2.frequency.setValueAtTime(1320, now);
+                osc2.frequency.exponentialRampToValueAtTime(660, now + 0.1);
+                osc2.type = 'triangle';
+                gain2.gain.setValueAtTime(0.15, now);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+                osc2.start(now);
+                osc2.stop(now + 0.2);
+            } catch (e) {
+                // 静默处理
+            }
+        }
+
+        function playCelebrateChime() {
+            if (!audioEnabled) return;
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            try {
+                const notes = [523, 659, 784, 1047];
+                notes.forEach(function(freq, i) {
+                    const now = ctx.currentTime + i * 0.12;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.value = freq;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                });
+            } catch (e) {}
+        }
+
+        audioBtn.addEventListener('click', function() {
+            audioEnabled = !audioEnabled;
+            if (audioEnabled) {
+                audioBtn.classList.remove('muted');
+                audioBtn.textContent = '🔊';
+                // 初始化音频上下文
+                const ctx = getAudioContext();
+                if (ctx && ctx.state === 'suspended') ctx.resume();
+                playWoodfishSound();
+            } else {
+                audioBtn.classList.add('muted');
+                audioBtn.textContent = '🔇';
+            }
+        });
+
+        // ============ 电子木鱼 ============
+        woodfishEl.addEventListener('click', function(e) {
+            playWoodfishSound();
+            woodfishEl.classList.add('woodfish-hit');
+            setTimeout(function() { woodfishEl.classList.remove('woodfish-hit'); }, 250);
+
+            // 飘出+1
+            const floatEl = document.createElement('span');
+            floatEl.className = 'float-text';
+            floatEl.textContent = '+1';
+            const rect = woodfishWrapper.getBoundingClientRect();
+            floatEl.style.left = (e.clientX - rect.left - 15) + 'px';
+            floatEl.style.top = (e.clientY - rect.top - 25) + 'px';
+            woodfishWrapper.appendChild(floatEl);
+            setTimeout(function() {
+                if (floatEl.parentNode) floatEl.parentNode.removeChild(floatEl);
+            }, 1300);
+
+            // 记录木鱼点击
+            incrementWoodfishCount();
+        });
+
+        function incrementWoodfishCount() {
+            let count = parseInt(localStorage.getItem('woodfish_clicks') || '0', 10);
+            count++;
+            localStorage.setItem('woodfish_clicks', String(count));
+        }
+
+        // ============ 粒子背景 ============
+        const particleCanvas = document.getElementById('particleCanvas');
+        const pCtx = particleCanvas.getContext('2d');
+        let particles = [];
+        const MAX_PARTICLES = 80;
+
+        function resizeParticleCanvas() {
+            particleCanvas.width = window.innerWidth;
+            particleCanvas.height = window.innerHeight;
+        }
+        resizeParticleCanvas();
+        window.addEventListener('resize', resizeParticleCanvas);
+
+        function createParticle() {
+            return {
+                x: Math.random() * particleCanvas.width,
+                y: Math.random() * particleCanvas.height,
+                radius: Math.random() * 2.5 + 0.5,
+                speedY: Math.random() * 0.6 + 0.15,
+                speedX: (Math.random() - 0.5) * 0.3,
+                opacity: Math.random() * 0.7 + 0.2,
+                color: Math.random() < 0.6 ?
+                    'rgba(255,215,0,' : 'rgba(0,240,255,',
+                pulse: Math.random() * Math.PI * 2
+            };
+        }
+        for (let i = 0; i < MAX_PARTICLES; i++) {
+            particles.push(createParticle());
+        }
+
+        function animateParticles() {
+            pCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+            particles.forEach(function(p) {
+                p.y -= p.speedY;
+                p.x += p.speedX;
+                p.pulse += 0.02;
+                if (p.y < -10) { p.y = particleCanvas.height + 10;
+                    p.x = Math.random() * particleCanvas.width; }
+                if (p.x < -10) p.x = particleCanvas.width + 10;
+                if (p.x > particleCanvas.width + 10) p.x = -10;
+                const alpha = p.opacity + Math.sin(p.pulse) * 0.15;
+                pCtx.beginPath();
+                pCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                pCtx.fillStyle = p.color + Math.max(0, Math.min(1, alpha)) + ')';
+                pCtx.fill();
+                // 微光晕
+                pCtx.beginPath();
+                pCtx.arc(p.x, p.y, p.radius * 2.5, 0, Math.PI * 2);
+                pCtx.fillStyle = p.color + Math.max(0, Math.min(1, alpha * 0.2)) + ')';
+                pCtx.fill();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+        animateParticles();
+
+        // ============ 倒计时（每日到23:59:59） ============
+        function updateCountdown() {
+            const now = new Date();
+            const endOfDay = new Date(now);
+            endOfDay.setHours(23, 59, 59, 999);
+            const diff = endOfDay - now;
+            if (diff <= 0) {
+                countdownTimeEl.textContent = '00:00:00';
+                if (doubleBlessDesc) doubleBlessDesc.textContent = '常规功德加持';
+                return;
+            }
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            countdownTimeEl.textContent =
+                String(h).padStart(2, '0') + ':' +
+                String(m).padStart(2, '0') + ':' +
+                String(s).padStart(2, '0');
+            if (doubleBlessDesc && diff > 0) {
+                doubleBlessDesc.textContent = '限时双倍功德 ⚡';
+            }
+        }
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+
+        // ============ 套餐结缘人数随机初始化 ============
+        function updatePlan2Count() {
+            const base = 8200;
+            const extra = Math.floor(Math.random() * 400);
+            if (plan2CountEl) plan2CountEl.textContent = (base + extra).toLocaleString();
+        }
+        updatePlan2Count();
+        setInterval(updatePlan2Count, 15000 + Math.random() * 30000);
+
+        // ============ 滚动通知条 ============
+        function getStoredRecords() {
+            try {
+                return JSON.parse(localStorage.getItem('merit_records') || '[]');
+            } catch (e) { return []; }
+        }
+
+        function updateTicker() {
+            const presetNotices = [
+                '[***3352] 刚刚获取了AI定制功德文',
+                '[***7819] 获得电子舍利子',
+                '[***4201] 完成大圆满结缘',
+                '[***1987] AI回向文已生成',
+                '[***6630] 尊享排行榜登顶',
+                '[***5012] 完成无尽藏结缘',
+                '[***2947] 获取双倍功德加持',
+                '[***8305] 电子木鱼连击破千',
+            ];
+            const stored = getStoredRecords();
+            const userNotices = stored.slice(-5).map(function(r) {
+                const masked = '***' + (r.maskedId || '****');
+                return '[' + masked + '] 完成' + (r.planName || '结缘') + ' ¥' + (r.amount || '--');
+            });
+            const allNotices = presetNotices.concat(userNotices);
+            // 随机打乱部分
+            const shuffled = allNotices.slice();
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            const displayNotices = shuffled.slice(0, 18);
+            let html = '';
+            displayNotices.forEach(function(n) {
+                html += '<span>' + safeText(n) + '</span>';
+            });
+            // 复制一份用于无缝滚动
+            html += html;
+            tickerContent.innerHTML = html;
+        }
+        updateTicker();
+        setInterval(updateTicker, 20000);
+
+        // ============ 排行榜 ============
+        function getLeaderboardData() {
+            const stored = getStoredRecords();
+            const presetData = [
+                { maskedId: '***8892', amount: 399.8, planName: '无尽藏', isPreset: true },
+                { maskedId: '***3456', amount: 299.7, planName: '无尽藏', isPreset: true },
+                { maskedId: '***7201', amount: 199.9, planName: '无尽藏', isPreset: true },
+                { maskedId: '***1134', amount: 188.5, planName: '大圆满', isPreset: true },
+                { maskedId: '***5689', amount: 150.0, planName: '大圆满', isPreset: true },
+                { maskedId: '***9023', amount: 128.8, planName: '大圆满', isPreset: true },
+                { maskedId: '***4477', amount: 99.9, planName: '大圆满', isPreset: true },
+                { maskedId: '***2310', amount: 88.0, planName: '中福聚', isPreset: true },
+            ];
+            const allData = presetData.concat(stored.map(function(r) {
+                return {
+                    maskedId: r.maskedId || '***----',
+                    amount: parseFloat(r.amount) || 0,
+                    planName: r.planName || '',
+                    isPreset: false,
+                    isVip: r.isVip || false,
+                    dharmaName: r.dharmaName || ''
+                };
+            }));
+            allData.sort(function(a, b) { return b.amount - a.amount; });
+            return allData.slice(0, 10);
+        }
+
+        function renderLeaderboard() {
+            const data = getLeaderboardData();
+            let html = '';
+            data.forEach(function(item, index) {
+                const rank = index + 1;
+                const rankClass = rank <= 3 ? ' top3' : '';
+                const badgeHtml = item.isVip ? '<span class="lb-badge">尊享</span>' : '';
+                const dharmaSuffix = item.dharmaName ? ' [' + safeText(item.dharmaName) + ']' : '';
+                html += '<div class="lb-row">' +
+                    '<span class="lb-rank' + rankClass + '">' + (rank <= 3 ? ['🥇', '🥈', '🥉'][rank - 1] :
+                        '#' + rank) + '</span>' +
+                    '<span class="lb-name">缘主' + safeText(item.maskedId) + safeText(dharmaSuffix) + badgeHtml +
+                    '</span>' +
+                    '<span class="lb-amount">¥' + item.amount.toFixed(1) + '</span>' +
+                    '</div>';
+            });
+            lbList.innerHTML = html;
+        }
+        renderLeaderboard();
+        setInterval(renderLeaderboard, 25000);
+
+        // ============ 大转盘 ============
+        const wheelSegments = [
+            { label: '8折券', rate: 0.8, color: '#ff2d55', textColor: '#fff' },
+            { label: '9折券', rate: 0.9, color: '#ff9500', textColor: '#fff' },
+            { label: '95折券', rate: 0.95, color: '#ffcc00', textColor: '#000' },
+            { label: '双倍功德', rate: 0.85, color: '#af52de', textColor: '#fff' },
+            { label: '9折券', rate: 0.9, color: '#ff6b35', textColor: '#fff' },
+            { label: '95折券', rate: 0.95, color: '#ffd740', textColor: '#000' },
+            { label: '8折券', rate: 0.8, color: '#e84393', textColor: '#fff' },
+            { label: '9折券', rate: 0.9, color: '#fd9644', textColor: '#fff' },
+        ];
+        const segAngle = (2 * Math.PI) / wheelSegments.length;
+        let wheelRotation = 0;
+
+        function drawWheel() {
+            const ctx = wheelCanvas.getContext('2d');
+            const cx = wheelCanvas.width / 2;
+            const cy = wheelCanvas.height / 2;
+            const radius = Math.min(cx, cy) - 8;
+            ctx.clearRect(0, 0, wheelCanvas.width, wheelCanvas.height);
+
+            wheelSegments.forEach(function(seg, i) {
+                const startAngle = wheelRotation + i * segAngle;
+                const endAngle = startAngle + segAngle;
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = seg.color;
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // 文字
+                const midAngle = startAngle + segAngle / 2;
+                const textR = radius * 0.62;
+                const tx = cx + Math.cos(midAngle) * textR;
+                const ty = cy + Math.sin(midAngle) * textR;
+                ctx.save();
+                ctx.translate(tx, ty);
+                ctx.rotate(midAngle + Math.PI / 2);
+                ctx.fillStyle = seg.textColor;
+                ctx.font = 'bold 13px "PingFang SC","Microsoft YaHei",sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(seg.label, 0, 0);
+                ctx.restore();
+            });
+
+            // 中心圆
+            const centerGrad = ctx.createRadialGradient(cx, cy, 8, cx, cy, 32);
+            centerGrad.addColorStop(0, '#fff');
+            centerGrad.addColorStop(1, '#ffd700');
+            ctx.beginPath();
+            ctx.arc(cx, cy, 26, 0, Math.PI * 2);
+            ctx.fillStyle = centerGrad;
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = '#000';
+            ctx.font = 'bold 11px "PingFang SC","Microsoft YaHei",sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('抽奖', cx, cy + 4);
+        }
+
+        function spinWheel() {
+            if (wheelSpinning) return;
+            wheelSpinning = true;
+            wheelResultDisplay.textContent = '🎰 转动中...';
+            const spins = 5 + Math.floor(Math.random() * 8);
+            const targetAngle = Math.random() * Math.PI * 2;
+            const totalRotation = spins * Math.PI * 2 + targetAngle;
+            const startRotation = wheelRotation;
+            const duration = 3500;
+            const startTime = performance.now();
+
+            function animateSpin(ts) {
+                const elapsed = ts - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // easeOutCubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                wheelRotation = startRotation + totalRotation * eased;
+                drawWheel();
+                if (progress < 1) {
+                    requestAnimationFrame(animateSpin);
+                } else {
+                    // 确定结果
+                    const normalized = ((wheelRotation % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+                    const segIndex = Math.floor(normalized / segAngle) % wheelSegments.length;
+                    const result = wheelSegments[segIndex];
+                    wheelDrawnDiscount = {
+                        rate: result.rate,
+                        label: result.label,
+                        expires: Date.now() + 10 * 60 * 1000
+                    };
+                    // 存入localStorage
+                    localStorage.setItem('active_discount', JSON.stringify(wheelDrawnDiscount));
+                    activeDiscount = wheelDrawnDiscount;
+                    wheelResultDisplay.textContent = '🎉 恭喜获得：' + result.label + '！';
+                    updateWheelTimerDisplay();
+                    wheelSpinning = false;
+                    // 3秒后可关闭
+                    setTimeout(function() {
+                        if (wheelResultDisplay.textContent.includes('恭喜')) {
+                            wheelResultDisplay.textContent += ' (有效期10分钟)';
+                        }
+                    }, 1500);
+                }
+            }
+            requestAnimationFrame(animateSpin);
+        }
+
+        function updateWheelTimerDisplay() {
+            if (!activeDiscount || activeDiscount.expires <= Date.now()) {
+                wheelTimerDisplay.textContent = '';
+                if (activeDiscount && activeDiscount.expires <= Date.now()) {
+                    wheelResultDisplay.textContent = '⏰ 折扣券已过期';
+                    activeDiscount = null;
+                    localStorage.removeItem('active_discount');
+                }
+                return;
+            }
+            const remaining = Math.max(0, activeDiscount.expires - Date.now());
+            const m = Math.floor(remaining / 60000);
+            const s = Math.floor((remaining % 60000) / 1000);
+            wheelTimerDisplay.textContent = '⏳ 折扣券剩余：' + m + '分' + String(s).padStart(2, '0') + '秒';
+            if (remaining <= 0) {
+                activeDiscount = null;
+                localStorage.removeItem('active_discount');
+                wheelTimerDisplay.textContent = '⏰ 折扣券已过期';
+            }
+        }
+
+        function closeWheel() {
+            wheelOverlay.classList.add('hidden');
+            // 标记已关闭
+            localStorage.setItem('wheel_closed_session', 'true');
+        }
+
+        function openWheel() {
+            wheelOverlay.classList.remove('hidden');
+            drawWheel();
+            updateWheelTimerDisplay();
+            if (activeDiscount && activeDiscount.expires > Date.now()) {
+                wheelResultDisplay.textContent = '🎫 当前持有：' + activeDiscount.label + '（有效）';
+            } else if (activeDiscount && activeDiscount.expires <= Date.now()) {
+                activeDiscount = null;
+                localStorage.removeItem('active_discount');
+                wheelResultDisplay.textContent = '';
+            } else {
+                wheelResultDisplay.textContent = '';
+            }
+        }
+
+        // 初始化：加载已存储的折扣券
+        function loadStoredDiscount() {
+            try {
+                const stored = JSON.parse(localStorage.getItem('active_discount') || 'null');
+                if (stored && stored.expires && stored.expires > Date.now()) {
+                    activeDiscount = stored;
+                    wheelDrawnDiscount = stored;
+                } else if (stored && stored.expires <= Date.now()) {
+                    localStorage.removeItem('active_discount');
+                    activeDiscount = null;
+                    wheelDrawnDiscount = null;
+                }
+            } catch (e) {
+                activeDiscount = null;
+                wheelDrawnDiscount = null;
+            }
+        }
+        loadStoredDiscount();
+        setInterval(function() {
+            if (activeDiscount && activeDiscount.expires <= Date.now()) {
+                activeDiscount = null;
+                localStorage.removeItem('active_discount');
+                updateWheelTimerDisplay();
+            }
+            updateWheelTimerDisplay();
+        }, 15000);
+
+        // 首次访问弹出转盘
+        function checkFirstVisitWheel() {
+            const closed = localStorage.getItem('wheel_closed_session');
+            const hasDiscount = activeDiscount && activeDiscount.expires > Date.now();
+            if (!closed && !hasDiscount) {
+                // 首次访问或之前未关闭，自动弹出
+                setTimeout(function() {
+                    openWheel();
+                }, 1200);
+            }
+        }
+        checkFirstVisitWheel();
+
+        // ============ 支付模态窗口 ============
+        function openPaymentModal(planNum) {
+            const plans = {
+                1: { name: '小缘起', price: 9.9 },
+                2: { name: '中福聚', price: 29.9 },
+                3: { name: '大圆满', price: 99.9 },
+                4: { name: '无尽藏', price: 199.9 },
+            };
+            const plan = plans[planNum];
+            if (!plan) return;
+            currentPlan = planNum;
+            currentPlanName = plan.name;
+            currentPlanPrice = plan.price;
+
+            // 应用折扣
+            let displayPrice = plan.price;
+            let discountLabel = '';
+            if (activeDiscount && activeDiscount.expires > Date.now()) {
+                displayPrice = Math.round(plan.price * activeDiscount.rate * 100) / 100;
+                discountLabel = '（已应用' + activeDiscount.label + '，原价¥' + plan.price.toFixed(1) + '）';
+                currentPlanPrice = displayPrice;
+            }
+
+            pmTitle.textContent = '福缘转账指引';
+            pmPlanInfo.textContent = '您选择的套餐：' + plan.name + ' | 金额：¥' + displayPrice.toFixed(2);
+            pmDiscountInfo.textContent = discountLabel;
+
+            // 重置
+            verifySection.classList.add('hidden');
+            verifyMsg.className = 'msg-box';
+            verifyMsg.textContent = '';
+            verifyMsg.style.display = 'none';
+            certificateArea.classList.remove('show');
+            certificateArea.style.display = 'none';
+            showVerifyBtn.style.display = 'inline-flex';
+            securityWarningEl.style.display = 'none';
+            copyCardBtn.style.display = 'inline-flex';
+            copyCardBtn.classList.remove('copied');
+            copyCardBtn.textContent = '📋 一键复制卡号';
+            if (cardNumberDisplayEl) cardNumberDisplayEl.style.display = 'inline-block';
+            if (document.getElementById('submitVerifyBtn')) {
+                document.getElementById('submitVerifyBtn').disabled = false;
+                document.getElementById('submitVerifyBtn').textContent = '提交验证';
+                document.getElementById('submitVerifyBtn').style.opacity = '1';
+                document.getElementById('submitVerifyBtn').style.pointerEvents = 'auto';
+            }
+            document.getElementById('verifyAmount').value = '';
+            document.getElementById('verifyNote').value = '';
+
+            // 重新确认卡号显示
+            initCardDisplay();
+            paymentModalOverlay.classList.remove('hidden');
+        }
+
+        function closePaymentModal() {
+            paymentModalOverlay.classList.add('hidden');
+            verifySection.classList.add('hidden');
+            certificateArea.classList.remove('show');
+            certificateArea.style.display = 'none';
+            verifyMsg.style.display = 'none';
+            currentPlan = null;
+            currentPlanPrice = null;
+            currentPlanName = '';
+        }
+
+        function showVerifySection() {
+            verifySection.classList.remove('hidden');
+            showVerifyBtn.style.display = 'none';
+            verifyMsg.className = 'msg-box';
+            verifyMsg.textContent = '';
+            verifyMsg.style.display = 'none';
+            certificateArea.classList.remove('show');
+            certificateArea.style.display = 'none';
+        }
+
+        function copyCardNumber() {
+            const raw = CARD_NUMBER_RAW;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(raw).then(function() {
+                    onCopySuccess();
+                }).catch(function() {
+                    fallbackCopy(raw);
+                });
+            } else {
+                fallbackCopy(raw);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed';
+            ta.style.left = '-9999px';
+            ta.style.top = '-9999px';
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {
+                document.execCommand('copy');
+                onCopySuccess();
+            } catch (e) {
+                alert('复制失败，请手动记录卡号：' + text);
+            }
+            document.body.removeChild(ta);
+        }
+
+        function onCopySuccess() {
+            copyCardBtn.classList.add('copied');
+            copyCardBtn.textContent = '✅ 已复制，请打开银行APP完成转账';
+            setTimeout(function() {
+                copyCardBtn.classList.remove('copied');
+                copyCardBtn.textContent = '📋 一键复制卡号';
+            }, 3000);
+        }
+
+        function submitVerification() {
+            if (!currentPlan || currentPlanPrice === null) {
+                showVerifyMessage('请先选择套餐并查看转账指引。', 'warn');
+                return;
+            }
+            const amountInput = document.getElementById('verifyAmount');
+            const amountVal = parseFloat(amountInput.value);
+            if (isNaN(amountVal) || amountVal <= 0) {
+                showVerifyMessage('请输入有效的转账金额。', 'warn');
+                return;
+            }
+            const expected = currentPlanPrice;
+            const diff = Math.abs(amountVal - expected);
+            if (diff > 0.11) {
+                showVerifyMessage(
+                    '您的转账金额（¥' + amountVal.toFixed(2) + '）尚未达到所选福缘门槛（¥' + expected.toFixed(2) +
+                    '），请补足金额后再验证，或选择其它套餐。您的每份支持我们都珍视。',
+                    'warn');
+                return;
+            }
+            // 验证通过
+            const noteVal = document.getElementById('verifyNote').value.trim();
+            showVerifyMessage('✅ 福缘验证通过！正在生成您的专属功德证书...', 'success');
+            generateCertificate(amountVal, noteVal);
+            triggerCelebrate();
+            playCelebrateChime();
+            saveMeritRecord(amountVal);
+            renderLeaderboard();
+            updateTicker();
+            // 隐藏验证按钮
+            if (document.getElementById('submitVerifyBtn')) {
+                document.getElementById('submitVerifyBtn').style.display = 'none';
+            }
+            showVerifyBtn.style.display = 'none';
+        }
+
+        function showVerifyMessage(msg, type) {
+            verifyMsg.textContent = safeText(msg);
+            verifyMsg.className = 'msg-box ' + (type || 'warn');
+            verifyMsg.style.display = 'block';
+        }
+
+        function generateCertificate(amount, note) {
+            const now = new Date();
+            const timeStr = now.toLocaleString('zh-CN', { hour12: false });
+            const aiText = generateAiText(currentPlanName, amount);
+            const isVipPlan = currentPlan === 4;
+            let dharmaName = '';
+            if (isVipPlan) {
+                dharmaName = generateDharmaName();
+            }
+            let detailsHtml = '套餐：' + safeText(currentPlanName) + '\n';
+            detailsHtml += '金额：¥' + amount.toFixed(2) + '\n';
+            detailsHtml += '时间：' + safeText(timeStr) + '\n';
+            if (dharmaName) {
+                detailsHtml += '赛博法号：' + safeText(dharmaName) + '\n';
+            }
+            if (note) {
+                detailsHtml += '备注：' + safeText(note) + '\n';
+            }
+            detailsHtml += '状态：福缘已记录 ✨';
+            certDetails.textContent = detailsHtml;
+            certAiText.textContent = aiText;
+            certificateArea.classList.add('show');
+            certificateArea.style.display = 'block';
+
+            // 如果是套餐3或4，显示电子舍利子提示
+            if (currentPlan >= 3) {
+                const relicNote = document.createElement('p');
+                relicNote.style.cssText =
+                    'color:#ffd700;font-size:0.8rem;margin-top:6px;letter-spacing:1px;animation:pulseGlow 2s infinite;';
+                relicNote.textContent = '💎 电子舍利子已生成（截图保存即为永久纪念）';
+                certificateArea.appendChild(relicNote);
+            }
+            if (dharmaName) {
+                window._lastDharmaName = dharmaName;
+            }
+        }
+
+        function generateAiText(planName, amount) {
+            const prefixes = [
+                '天地玄黄，宇宙洪荒，',
+                '星河轮转，因果交织，',
+                '数据如露亦如电，',
+                '一花一世界，一码一菩提，',
+                '云端之上，福缘流转，',
+                '霓虹灯下，善念恒存，',
+            ];
+            const bodies = [
+                '您的这份心意已化作数字世界的微光，照亮虚拟时空的某个角落。',
+                '此刻起，算法的涟漪将携带您的善意，在赛博空间中静静回响。',
+                '愿这份数字缘分如涓涓细流，汇入您生活的美好之海。',
+                '在0与1的海洋中，您的福缘已刻入永恒的分布式账本。',
+                '电子木鱼的每一声回响，都是对宁静内心的温柔叩问。',
+            ];
+            const endings = [
+                '若您再次结缘，新的数字福报将即刻续写。',
+                '缘起缘续，赛博世界期待与您的下次相遇。',
+                '一念既起，万缘相随；再续功德，福慧双增。',
+            ];
+            const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+            const body = bodies[Math.floor(Math.random() * bodies.length)];
+            const ending = endings[Math.floor(Math.random() * endings.length)];
+            return prefix + body + '\n\n' + ending;
+        }
+
+        function generateDharmaName() {
+            const adj = ['慧光', '量子', '般若', '数据', '灵犀', '玄明', '星河', '云隐', '金阙', '玉衡'];
+            const noun = ['尊者', '护法', '居士', '行者', '上人', '真人', '导师', '贤者', '禅者', '觉者'];
+            const a = adj[Math.floor(Math.random() * adj.length)];
+            const n = noun[Math.floor(Math.random() * noun.length)];
+            return a + n;
+        }
+
+        function saveMeritRecord(amount) {
+            const stored = getStoredRecords();
+            const maskedId = generateMaskedId();
+            const record = {
+                maskedId: maskedId,
+                amount: amount,
+                planName: currentPlanName,
+                time: new Date().toISOString(),
+                isVip: currentPlan === 4,
+                dharmaName: window._lastDharmaName || '',
+            };
+            stored.push(record);
+            // 最多保留50条
+            const trimmed = stored.slice(-50);
+            localStorage.setItem('merit_records', JSON.stringify(trimmed));
+        }
+
+        function generateMaskedId() {
+            const chars = '0123456789';
+            let id = '';
+            for (let i = 0; i < 4; i++) {
+                id += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return id;
+        }
+
+        function triggerCelebrate() {
+            const overlay = celebrateOverlay;
+            const colors = ['#ffd700', '#ffaa00', '#ff6090', '#00f0ff', '#b347ea', '#3bff8c', '#ff9500', '#fff'];
+            const fragment = document.createDocumentFragment();
+            for (let i = 0; i < 80; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'celebrate-particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.top = -(Math.random() * 40 + 10) + 'px';
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.width = (Math.random() * 10 + 3) + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                particle.style.animationDelay = Math.random() * 0.8 + 's';
+                fragment.appendChild(particle);
+            }
+            overlay.appendChild(fragment);
+            setTimeout(function() {
+                overlay.innerHTML = '';
+            }, 3500);
+        }
+
+        // ============ AI许愿池 ============
+        function generateWish() {
+            const input = document.getElementById('wishInput');
+            const wish = input.value.trim();
+            if (!wish) {
+                wishResult.style.display = 'block';
+                wishResult.innerHTML = '<span style="color:#ffb86c;">请输入您的心愿后再点击AI加持哦~</span>';
+                return;
+            }
+            const safeWish = safeText(wish);
+            const templates = [
+                '天机感应，已收到您的心愿「' + safeWish + '」。星象显示，此愿与数据流高度共振，缘力正在汇聚...',
+                '云端算法已捕捉您的意念「' + safeWish + '」。在赛博宇宙中，每一念皆被铭记，福缘正悄然编织...',
+                'AI加持完毕。您的心愿「' + safeWish + '」已录入功德数据库。乾坤未定，缘力可期...',
+                '量子纠缠已建立。关于「' + safeWish + '」的福缘信号正穿越数字星河，请保持正念等待回响...',
+            ];
+            const chosen = templates[Math.floor(Math.random() * templates.length)];
+            wishResult.style.display = 'block';
+            const resultDiv = wishResult;
+            resultDiv.innerHTML = '';
+            const textNode = document.createTextNode(chosen);
+            resultDiv.appendChild(textNode);
+            resultDiv.appendChild(document.createElement('br'));
+            const ctaSpan = document.createElement('span');
+            ctaSpan.className = 'cta';
+            ctaSpan.textContent = '✨再积一份功德，缘力更甚。';
+            ctaSpan.addEventListener('click', function() {
+                document.getElementById('plansGrid').scrollIntoView({ behavior: 'smooth' });
+            });
+            resultDiv.appendChild(ctaSpan);
+        }
+
+        // ============ 全局事件 ============
+        // 点击模态遮罩不关闭（不可误触关闭）
+        paymentModalOverlay.addEventListener('click', function(e) {
+            if (e.target === paymentModalOverlay) {
+                // 不关闭，但给个视觉提示
+                paymentModalOverlay.style.boxShadow = 'inset 0 0 0 3px rgba(255,215,0,0.5)';
+                setTimeout(function() {
+                    paymentModalOverlay.style.boxShadow = '';
+                }, 300);
+            }
+        });
+
+        // 键盘ESC不关闭支付模态
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (!wheelOverlay.classList.contains('hidden')) {
+                    closeWheel();
+                }
+                // 支付模态不通过ESC关闭
+                if (!paymentModalOverlay.classList.contains('hidden')) {
+                    e.preventDefault();
+                }
+            }
+        });
+
+        // 窗口大小调整时重绘转盘
+        window.addEventListener('resize', function() {
+            if (!wheelOverlay.classList.contains('hidden')) {
+                drawWheel();
+            }
+        });
+
+        // ============ 初始化转盘绘制 ============
+        drawWheel();
+
+        // ============ 定期更新折扣券状态 ============
+        setInterval(function() {
+            if (activeDiscount && activeDiscount.expires <= Date.now()) {
+                activeDiscount = null;
+                localStorage.removeItem('active_discount');
+                updateWheelTimerDisplay();
+                if (!wheelOverlay.classList.contains('hidden')) {
+                    wheelResultDisplay.textContent = '⏰ 折扣券已过期，请重新抽奖';
+                }
+            }
+            updateWheelTimerDisplay();
+        }, 10000);
+
+        // ============ 初始化完成 ============
+        console.log('赛博功德·AI福报数字文创 已就绪');
+        console.log('所有数据仅存储在本地浏览器，不发送至任何服务器。');
+        console.log('唯一收款账户：' + BANK_NAME + ' | 户名：' + ACCOUNT_NAME_RAW + ' | 卡号：' + CARD_NUMBER_RAW);
+    </script>
+</body>
+</html>
